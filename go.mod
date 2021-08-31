@@ -1,4 +1,4 @@
-module code.byted.org/iaasng/reset-authentication
+module github.com/volcengine/reset-authentication
 
 go 1.16
 
