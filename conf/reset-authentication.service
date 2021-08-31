@@ -1,0 +1,17 @@
+[Unit]
+Description=Execute reset-authentication
+After=network-online.target rc-local.service
+Before=apt-daily.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/reset-authentication
+RemainAfterExit=yes
+TimeoutSec=0
+KillMode=process
+TasksMax=infinity
+
+[Install]
+Alias=reset-authenticationd.service
+WantedBy=multi-user.target
