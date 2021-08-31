@@ -1,0 +1,61 @@
+### BEGIN INIT INFO
+# Provides:          reset-authentication
+# Required-Start:    $local_fs $network
+# Should-Start:      $time
+# Required-Stop:
+# Should-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: reset authentication
+# Description:       Reset authentication, password or authorized keys
+
+RETVAL=0
+
+reset_authen_exec="/usr/local/bin/reset-authentication"
+reset_authen_conf="/etc/volcstack/reset-authentication.yml"
+
+start() {
+    # ENOENT 2
+    [ -x $reset_authen_exec ] || return 2
+    [ -f $reset_authen_conf ] || return 2
+
+    $reset_authen_exec --conf $reset_authen_conf
+    return $?
+}
+
+stop() {
+   # EACCES 13
+   return 13
+}
+
+case "$1" in
+    start)
+        start
+        RETVAL=$?
+    ;;
+    stop)
+        echo -n "It does not support stop"
+        # EACCES 13
+        return 13
+    ;;
+    restart|try-restart|condrestart)
+        start
+        RETVAL=$?
+    ;;
+    reload|force-reload)
+        echo -n "It does not support reload|force-reload"
+        # EACCES 13
+        return 13
+    ;;
+    status)
+        echo -n "It does not support status"
+        # EACCES 13
+        return 13
+    ;;
+    *)
+        echo "Usage: $0 {start|try-restart|condrestart|restart}"
+        RETVAL=3
+    ;;
+esac
+
+exit $RETVAL

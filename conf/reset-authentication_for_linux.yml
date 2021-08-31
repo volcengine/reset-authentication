@@ -1,0 +1,7 @@
+DataSource:
+  Addresses: "100.96.0.96"
+  Timeout: 5
+  Retries: 12
+  Interval: 5
+LogPath: "/var/log/volcstack"
+ResetPasswordMethod: "linux_sha512"
