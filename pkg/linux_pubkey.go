@@ -4,17 +4,54 @@ package pkg
 
 import (
 	"bufio"
+	"bytes"
 	"github.com/volcengine/reset-authentication/util"
+	"context"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 )
 
 type LinuxResetPublicKey struct {
+}
+
+func (*LinuxResetPublicKey) CleanPassword() {
+	var runCmd = exec.Command("passwd", "-d", "root")
+
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*30)
+	defer cancel()
+
+	var err error
+	var errCh = make(chan error)
+
+	go func() {
+		var stderr bytes.Buffer
+		runCmd.Stderr = &stderr
+		err := runCmd.Run()
+
+		if err != nil {
+			errCh <- fmt.Errorf("StdErr: %s RetErr: %v", string(stderr.Bytes()), err)
+		}
+	}()
+
+	select {
+	case err = <-errCh:
+		if err != nil {
+			util.Info("Clean password success")
+		}
+		util.Info("Clean password failed:", err)
+	case <-ctx.Done():
+		if runCmd.Process != nil {
+			_ = runCmd.Process.Kill()
+		}
+		util.Info("Clean password timeout")
+	}
 }
 
 func (*LinuxResetPublicKey) GetDelPublicKey() (string, error) {
@@ -41,7 +78,7 @@ func (*LinuxResetPublicKey) GetAddPublicKey() (string, error) {
 	return string(out), nil
 }
 
-func (*LinuxResetPublicKey) ResetPublicKey(delKey, addKey string) error {
+func (l *LinuxResetPublicKey) ResetPublicKey(delKey, addKey string) error {
 	const sshAuthKeyFile = "/root/.ssh/authorized_keys"
 
 	if delKey == "" && addKey == "" {
@@ -137,6 +174,10 @@ func (*LinuxResetPublicKey) ResetPublicKey(delKey, addKey string) error {
 	_ = file.Sync()
 
 	util.Info("Reset public key success.")
+
+	if addKey != "" {
+		l.CleanPassword()
+	}
 
 	return nil
 }
